@@ -218,6 +218,12 @@
   .status-completed{ color:var(--green); text-shadow:0 0 8px var(--green-glow); }
   .status-released{ color:var(--green); font-weight:700; text-shadow:0 0 10px var(--green-glow); }
 
+  .change-code-link{
+    margin-top:16px; color:var(--text-dim); font-size:11.5px;
+    text-decoration:underline; cursor:pointer; letter-spacing:.3px;
+  }
+  .change-code-link:hover{ color:var(--text); }
+
   /* ---------- Right column ---------- */
   .right-col{ display:flex; flex-direction:column; gap:20px; }
 
@@ -351,6 +357,33 @@
   }
   .msg-card .sub{ color:var(--text-dim); font-size:13px; line-height:1.6; }
   .msg-card.error .title{ color:var(--red); }
+
+  /* ---------- Code entry form ---------- */
+  .code-entry{ margin-top:22px; text-align:left; }
+  .code-entry label{
+    display:block; color:var(--text-dim); font-size:11px;
+    letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;
+  }
+  .code-entry-row{ display:flex; gap:10px; }
+  .code-entry input{
+    flex:1; min-width:0;
+    background:#1a1b19; border:1px solid var(--line); color:var(--text);
+    font-family:'JetBrains Mono', monospace; font-size:14px;
+    padding:11px 14px; border-radius:8px;
+    letter-spacing:1px;
+  }
+  .code-entry input:focus{ outline:none; border-color:var(--green); box-shadow:0 0 8px var(--green-glow); }
+  .code-entry button{
+    font-family:'Sora', sans-serif; font-weight:700; font-size:13px;
+    letter-spacing:.5px; text-transform:uppercase;
+    background:var(--green); color:#08110a; border:none;
+    padding:11px 20px; border-radius:8px; cursor:pointer;
+    box-shadow:0 0 12px var(--green-glow);
+    transition:opacity .2s ease;
+  }
+  .code-entry button:hover{ opacity:.85; }
+  .code-entry .err{ color:var(--red); font-size:12px; margin-top:10px; display:none; }
+  .code-entry .err.show{ display:block; }
 </style>
 </head>
 <body>
@@ -473,6 +506,46 @@ function showMessage(title, sub, isError){
         <div class="sub">${sub}</div>
       </div>
     </div>`;
+}
+
+let manualCode = '';
+
+function showCodeEntryForm(errText){
+  document.getElementById('app').innerHTML = `
+    <div class="msg-wrap">
+      <div class="msg-card">
+        <div class="title">View Your Rewards</div>
+        <div class="sub">Enter the Partner Code shared with you by XYLO Trade to see your progress.</div>
+        <div class="code-entry">
+          <label for="codeInput">Partner Code</label>
+          <div class="code-entry-row">
+            <input type="text" id="codeInput" placeholder="e.g. 1234" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <button id="codeSubmit">View</button>
+          </div>
+          <div class="err ${errText ? 'show' : ''}" id="codeErr">${errText || ''}</div>
+        </div>
+      </div>
+    </div>`;
+
+  const input = document.getElementById('codeInput');
+  const submit = () => {
+    const val = (input.value || '').trim();
+    if (!val){
+      const err = document.getElementById('codeErr');
+      err.textContent = 'Please enter your Partner Code.';
+      err.classList.add('show');
+      return;
+    }
+    manualCode = val;
+    const url = new URL(window.location.href);
+    url.searchParams.set('c', val);
+    window.history.replaceState({}, '', url);
+    loadData();
+  };
+
+  document.getElementById('codeSubmit').addEventListener('click', submit);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+  input.focus();
 }
 
 function statusInfo(status){
@@ -664,6 +737,7 @@ function renderClientGroup(rows){
         <div class="client-code">CODE: ${first.PartnerCode}</div>
         ${dropdownHTML}
         <div id="idPanelBody"></div>
+        <div class="change-code-link" id="changeCodeLink">Not you? Enter a different code</div>
       </div>
 
       <div class="right-col">
@@ -683,6 +757,14 @@ function renderClientGroup(rows){
 
   renderInner(rows[0]);
 
+  document.getElementById('changeCodeLink').addEventListener('click', function(){
+    manualCode = '';
+    const url = new URL(window.location.href);
+    url.searchParams.delete('c');
+    window.history.replaceState({}, '', url);
+    showCodeEntryForm();
+  });
+
   if (hasMultiple){
     document.getElementById('offerSelect').addEventListener('change', function(e){
       renderInner(rows[parseInt(e.target.value, 10)]);
@@ -691,14 +773,10 @@ function renderClientGroup(rows){
 }
 
 function loadData(){
-  const code = getCodeFromURL();
+  const code = manualCode || getCodeFromURL();
 
   if (!code){
-    showMessage(
-      'No Code Found',
-      'Please use the personal link shared with you by XYLO Trade to view your rewards progress.',
-      true
-    );
+    showCodeEntryForm();
     return;
   }
 
@@ -716,11 +794,7 @@ function loadData(){
       const rows = results.data;
       const matches = rows.filter(r => (r.PartnerCode || '').trim().toLowerCase() === code.toLowerCase());
       if (matches.length === 0){
-        showMessage(
-          'Code Not Found',
-          `We couldn't find this code under ${group.label}. Please check your link, try another tab above, or contact XYLO Trade support.`,
-          true
-        );
+        showCodeEntryForm(`We couldn't find "${code}" under ${group.label}. Check the code, try another tab above, or contact support.`);
         return;
       }
       renderClientGroup(matches);
