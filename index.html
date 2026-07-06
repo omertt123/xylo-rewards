@@ -6,7 +6,7 @@
 <title>XYLO TRADE — My Rewards</title>
 <link rel="icon" href="https://crm.xylotrade.uk/assets/images/logoIcon/logo.png?v=1782996709">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{
@@ -14,10 +14,11 @@
     --panel:#121312;
     --panel-2:#17181653;
     --line:#232522;
-    --green:#34e07a;
-    --green-deep:#12321d;
+    --green:#2fae4a;
+    --green-deep:#163b22;
     --green-dim:#7fae90;
-    --gold:#d4af37;
+    --silver:#c7ccd0;
+    --silver-dim:#8a9094;
     --red:#e6433f;
     --text:#f2f4f1;
     --text-dim:#83897f;
@@ -59,7 +60,7 @@
   .brand{ display:flex; align-items:center; gap:10px; }
   .brand img{ height:30px; width:auto; display:block; }
   .brand .name{
-    font-family:'Rajdhani', sans-serif;
+    font-family:'Sora', sans-serif;
     font-weight:600; font-size:16px; letter-spacing:3px;
   }
   .topbar .tag{
@@ -130,7 +131,7 @@
   /* ---------- Identity + gauge panel ---------- */
   .id-panel{ padding:28px 26px 30px; text-align:center; }
   .client-name{
-    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:23px;
+    font-family:'Sora', sans-serif; font-weight:700; font-size:23px;
   }
   .client-code{
     font-family:'JetBrains Mono', monospace; font-size:11.5px;
@@ -152,7 +153,7 @@
     display:flex; flex-direction:column; align-items:center; justify-content:center;
   }
   .gauge-pct{
-    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:42px; line-height:1;
+    font-family:'Sora', sans-serif; font-weight:700; font-size:42px; line-height:1;
   }
   .gauge-label{
     color:var(--text-dim); font-size:10.5px; letter-spacing:1.5px;
@@ -171,7 +172,7 @@
     letter-spacing:1px; text-transform:uppercase;
     padding-top:18px; border-top:1px dashed var(--line);
   }
-  .status-inprogress{ color:var(--gold); }
+  .status-inprogress{ color:var(--silver); }
   .status-completed{ color:var(--green); }
   .status-released{ color:var(--green); font-weight:700; }
 
@@ -181,33 +182,51 @@
   /* Stepper */
   .stepper-panel{ padding:24px 26px 26px; }
   .panel-title{
-    font-family:'Rajdhani', sans-serif; font-weight:600; font-size:14px;
+    font-family:'Sora', sans-serif; font-weight:600; font-size:14px;
     letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim);
     margin-bottom:20px;
   }
-  .stepper{ display:flex; align-items:flex-start; }
+  .stepper{ position:relative; display:grid; grid-template-columns:repeat(4, 1fr); }
+  .stepper-line{
+    position:absolute; top:6px; left:12.5%; right:12.5%; height:2px;
+    background:var(--line); z-index:0;
+  }
+  .stepper-fill{
+    position:absolute; top:6px; left:12.5%; height:2px;
+    background:var(--green); z-index:0; width:0%;
+    transition:width .5s ease;
+  }
   .step{
-    flex:1; display:flex; flex-direction:column; align-items:center; text-align:center;
-    position:relative;
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    position:relative; z-index:1;
   }
   .step-dot{
     width:13px; height:13px; border-radius:50%;
-    background:var(--line); border:2px solid var(--line);
-    margin-bottom:10px; z-index:1;
+    background:var(--panel); border:2px solid var(--line);
+    margin-bottom:10px;
   }
   .step.done .step-dot{ background:var(--green); border-color:var(--green); }
-  .step.current .step-dot{ background:var(--gold); border-color:var(--gold); }
-  .step-connector{
-    position:absolute; top:6px; left:50%; width:100%; height:2px;
-    background:var(--line); z-index:0;
-  }
-  .step.done .step-connector{ background:var(--green); }
-  .step:first-child .step-connector{ display:none; }
+  .step.current .step-dot{ background:var(--silver); border-color:var(--silver); }
   .step-label{
     font-size:10.5px; letter-spacing:.5px; color:var(--text-dim);
     line-height:1.4; max-width:90px;
   }
   .step.done .step-label, .step.current .step-label{ color:var(--text); }
+
+  .congrats-banner{
+    margin-top:18px;
+    background:linear-gradient(90deg, var(--green-deep), transparent);
+    border:1px solid var(--green-deep);
+    border-radius:10px;
+    padding:12px 16px;
+    text-align:center;
+    font-family:'Sora', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    color:var(--green);
+    letter-spacing:.5px;
+  }
+  .congrats-banner span{ font-size:16px; margin-right:6px; }
 
   /* Stats grid */
   .stats-panel{ padding:24px 26px 26px; }
@@ -227,7 +246,47 @@
     font-family:'JetBrains Mono', monospace; font-size:15px; font-weight:600;
   }
   .value.accent{ color:var(--green); }
-  .value.gold{ color:var(--gold); }
+  .value.silver{ color:var(--silver); }
+
+  /* Offer type dropdown */
+  .offer-select-wrap{ margin-top:14px; }
+  .offer-select{
+    width:100%;
+    background:#1a1b19;
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:.5px;
+    padding:9px 12px;
+    border-radius:8px;
+    appearance:none;
+    -webkit-appearance:none;
+    background-image:linear-gradient(45deg, transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+    background-position:calc(100% - 18px) center, calc(100% - 13px) center;
+    background-size:5px 5px, 5px 5px;
+    background-repeat:no-repeat;
+    cursor:pointer;
+  }
+  .offer-select:focus{ outline:1px solid var(--green); }
+
+  /* Contact support */
+  .contact-panel{ padding:22px 26px 26px; margin-top:20px; }
+  .contact-buttons{ display:flex; gap:12px; flex-wrap:wrap; }
+  .contact-btn{
+    flex:1; min-width:160px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:12px 16px;
+    border-radius:10px;
+    font-family:'Inter', sans-serif;
+    font-weight:600; font-size:13.5px;
+    text-decoration:none;
+    border:1px solid var(--line);
+    transition:opacity .2s ease;
+  }
+  .contact-btn:hover{ opacity:.85; }
+  .contact-btn.whatsapp{ background:var(--green); color:#08110a; border-color:var(--green); }
+  .contact-btn.email{ background:transparent; color:var(--silver); border-color:var(--silver-dim); }
 
   .footer-note{
     max-width:960px; width:100%;
@@ -243,7 +302,7 @@
     padding:44px 28px;
   }
   .msg-card .title{
-    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:19px; margin-bottom:10px;
+    font-family:'Sora', sans-serif; font-weight:700; font-size:19px; margin-bottom:10px;
   }
   .msg-card .sub{ color:var(--text-dim); font-size:13px; line-height:1.6; }
   .msg-card.error .title{ color:var(--red); }
@@ -271,6 +330,14 @@
           <div class="title">Loading your progress…</div>
           <div class="sub">Please wait a moment.</div>
         </div>
+      </div>
+    </div>
+
+    <div class="panel contact-panel">
+      <div class="panel-title">Need Help?</div>
+      <div class="contact-buttons">
+        <a class="contact-btn whatsapp" href="https://wa.me/17754694127" target="_blank" rel="noopener">WhatsApp Support</a>
+        <a class="contact-btn email" href="mailto:info@xylotrade.uk">Email Support</a>
       </div>
     </div>
   </div>
@@ -302,25 +369,33 @@ function showMessage(title, sub, isError){
 
 function statusInfo(status){
   const s = (status || '').toLowerCase();
-  if (s.includes('release')) return { cls:'status-released', stage:3 };
-  if (s.includes('complete')) return { cls:'status-completed', stage:2 };
-  return { cls:'status-inprogress', stage:1 };
+  if (s.includes('release')) return { cls:'status-released', stage:4 };
+  if (s.includes('complete')) return { cls:'status-completed', stage:3 };
+  return { cls:'status-inprogress', stage:2 };
 }
 
 function stepperHTML(stage){
   const steps = ['Deposit Made', 'Volume Completed', 'Hold Period', 'Reward Released'];
-  return steps.map((label, i) => {
+  const fillPct = ((stage - 1) / (steps.length - 1)) * 100;
+
+  const dots = steps.map((label, i) => {
     const idx = i + 1;
     let cls = '';
     if (idx < stage) cls = 'done';
     else if (idx === stage) cls = 'current';
     return `
       <div class="step ${cls}">
-        <div class="step-connector"></div>
         <div class="step-dot"></div>
         <div class="step-label">${label}</div>
       </div>`;
   }).join('');
+
+  return `
+    <div class="stepper">
+      <div class="stepper-line"></div>
+      <div class="stepper-fill" style="width:${fillPct}%"></div>
+      ${dots}
+    </div>`;
 }
 
 function gaugeSVG(pct){
@@ -347,79 +422,110 @@ function gaugeSVG(pct){
     <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
       ${ticks}
       <circle cx="${cx}" cy="${cy}" r="${radius}" stroke="#232522" stroke-width="11" fill="none"/>
-      <circle cx="${cx}" cy="${cy}" r="${radius}" stroke="#34e07a" stroke-width="11" fill="none"
+      <circle cx="${cx}" cy="${cy}" r="${radius}" stroke="#2fae4a" stroke-width="11" fill="none"
         stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"
         transform="rotate(-90 ${cx} ${cy})"/>
     </svg>`;
 }
 
-function renderClient(row){
+function renderInner(row){
   const required = parseFloat(row.RequiredLots) || 0;
   const completed = parseFloat(row.LotsCompleted) || 0;
   const pct = required > 0 ? Math.min(100, Math.round((completed / required) * 100)) : 0;
   const st = statusInfo(row.Status);
 
+  document.getElementById('idPanelBody').innerHTML = `
+    <div class="badge">${row.OfferType || ''}</div>
+
+    <div class="gauge-wrap">
+      <div class="gauge">
+        ${gaugeSVG(pct)}
+        <div class="gauge-center">
+          <div class="gauge-pct">${pct}%</div>
+          <div class="gauge-label">Volume Complete</div>
+          <div class="gauge-lots">${completed} / ${required} lots</div>
+        </div>
+      </div>
+    </div>
+
+    ${pct >= 100 ? `<div class="congrats-banner"><span>🎉</span>Congratulations! Target volume completed</div>` : ''}
+
+    <div class="status-line ${st.cls}">${(row.Status || 'In Progress').toUpperCase()}</div>
+  `;
+
+  document.getElementById('stepperBody').innerHTML = stepperHTML(st.stage);
+
+  document.getElementById('statsBody').innerHTML = `
+    <div class="field">
+      <div class="label">Deposit Target</div>
+      <div class="value">$${row.DepositTarget || '—'}</div>
+    </div>
+    <div class="field">
+      <div class="label">Cash Reward</div>
+      <div class="value accent">${row.CashReward || '—'}</div>
+    </div>
+    <div class="field">
+      <div class="label">Additional Reward</div>
+      <div class="value silver">${row.AdditionalReward && row.AdditionalReward !== '-' ? row.AdditionalReward : 'None'}</div>
+    </div>
+    <div class="field">
+      <div class="label">Deposit Date</div>
+      <div class="value">${row.DepositDate || '—'}</div>
+    </div>
+    <div class="field">
+      <div class="label">Required Lots</div>
+      <div class="value">${row.RequiredLots || '—'}</div>
+    </div>
+    <div class="field">
+      <div class="label">Lots Completed</div>
+      <div class="value">${row.LotsCompleted || '0'}</div>
+    </div>
+  `;
+}
+
+function renderClientGroup(rows){
+  const first = rows[0];
+  const hasMultiple = rows.length > 1;
+
+  const dropdownHTML = hasMultiple ? `
+    <div class="offer-select-wrap">
+      <select class="offer-select" id="offerSelect">
+        ${rows.map((r, i) => `<option value="${i}">${r.OfferType || 'Offer ' + (i + 1)}</option>`).join('')}
+      </select>
+    </div>` : '';
+
   document.getElementById('app').innerHTML = `
     <div class="layout">
 
       <div class="panel id-panel">
-        <div class="client-name">${row.ClientName || 'Client'}</div>
-        <div class="client-code">CODE: ${row.Code}</div>
-        <div class="badge">${row.OfferType || ''}</div>
-
-        <div class="gauge-wrap">
-          <div class="gauge">
-            ${gaugeSVG(pct)}
-            <div class="gauge-center">
-              <div class="gauge-pct">${pct}%</div>
-              <div class="gauge-label">Volume Complete</div>
-              <div class="gauge-lots">${completed} / ${required} lots</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="status-line ${st.cls}">${(row.Status || 'In Progress').toUpperCase()}</div>
+        <div class="client-name">${first.ClientName || 'Client'}</div>
+        <div class="client-code">CODE: ${first.Code}</div>
+        ${dropdownHTML}
+        <div id="idPanelBody"></div>
       </div>
 
       <div class="right-col">
         <div class="panel stepper-panel">
           <div class="panel-title">Reward Journey</div>
-          <div class="stepper">${stepperHTML(st.stage)}</div>
+          <div id="stepperBody"></div>
         </div>
 
         <div class="panel stats-panel">
           <div class="panel-title">Target Details</div>
-          <div class="grid">
-            <div class="field">
-              <div class="label">Deposit Target</div>
-              <div class="value">$${row.DepositTarget || '—'}</div>
-            </div>
-            <div class="field">
-              <div class="label">Cash Reward</div>
-              <div class="value accent">${row.CashReward || '—'}</div>
-            </div>
-            <div class="field">
-              <div class="label">Additional Reward</div>
-              <div class="value gold">${row.AdditionalReward && row.AdditionalReward !== '-' ? row.AdditionalReward : 'None'}</div>
-            </div>
-            <div class="field">
-              <div class="label">Deposit Date</div>
-              <div class="value">${row.DepositDate || '—'}</div>
-            </div>
-            <div class="field">
-              <div class="label">Required Lots</div>
-              <div class="value">${row.RequiredLots || '—'}</div>
-            </div>
-            <div class="field">
-              <div class="label">Lots Completed</div>
-              <div class="value">${row.LotsCompleted || '0'}</div>
-            </div>
-          </div>
+          <div class="grid" id="statsBody"></div>
         </div>
       </div>
 
     </div>
   `;
+
+  renderInner(rows[0]);
+
+  if (hasMultiple){
+    document.getElementById('offerSelect').addEventListener('change', function(e){
+      renderInner(rows[parseInt(e.target.value, 10)]);
+    });
+  }
 }
 
 function loadData(){
@@ -440,8 +546,8 @@ function loadData(){
     skipEmptyLines: true,
     complete: function(results){
       const rows = results.data;
-      const match = rows.find(r => (r.Code || '').trim().toLowerCase() === code.toLowerCase());
-      if (!match){
+      const matches = rows.filter(r => (r.Code || '').trim().toLowerCase() === code.toLowerCase());
+      if (matches.length === 0){
         showMessage(
           'Code Not Found',
           "We couldn't find this code. Please check your link or contact XYLO Trade support.",
@@ -449,7 +555,7 @@ function loadData(){
         );
         return;
       }
-      renderClient(match);
+      renderClientGroup(matches);
     },
     error: function(){
       showMessage(
