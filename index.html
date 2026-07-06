@@ -122,6 +122,27 @@
     margin-bottom:22px;
   }
 
+  /* ---------- Group tabs (ECN / STANDARD / RAW) ---------- */
+  .group-tabs{
+    display:flex; gap:10px; flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .group-tab{
+    font-family:'Sora', sans-serif; font-weight:600; font-size:12.5px;
+    letter-spacing:1.5px; text-transform:uppercase;
+    padding:10px 20px; border-radius:10px;
+    background:var(--panel); border:1px solid var(--line);
+    color:var(--text-dim);
+    cursor:pointer;
+    transition:all .2s ease;
+  }
+  .group-tab:hover{ color:var(--text); border-color:var(--silver-dim); }
+  .group-tab.active{
+    color:var(--green); border-color:var(--green);
+    box-shadow:0 0 10px var(--green-glow), inset 0 0 6px rgba(57,255,106,0.12);
+    text-shadow:0 0 6px var(--green-glow);
+  }
+
   /* ---------- Layout: desktop two-column ---------- */
   .layout{
     display:grid;
@@ -352,6 +373,7 @@
 
   <div class="page">
     <div class="eyebrow">My Rewards &amp; Progress</div>
+    <div class="group-tabs" id="groupTabs"></div>
     <div id="app">
       <div class="msg-wrap">
         <div class="msg-card">
@@ -375,14 +397,70 @@
 <script>
 // ====== CONFIG ======
 const SHEET_ID = "1iDwIqHeMtg1xWPovl7uM_6PNDshjoqJKpx_khS6Hbm4";
-const SHEET_NAME = "Sheet1";
+
+// One Google Sheet, three tabs.
+// "fields" = which extra columns show in the "Target Details" box for that group
+// (RequiredLots / LotsCompleted are always shown automatically, no need to list them).
+const GROUPS = [
+  { key:'ecn',      label:'ECN',      sheet:'Sheet1', fields:['DepositTarget','CashReward','AdditionalReward','DepositDate','DepositHoldRequirement','DaysCompleted'] },
+  { key:'standard', label:'STANDARD', sheet:'Sheet2', fields:['DepositTarget','CashReward','AdditionalReward'] },
+  { key:'raw',      label:'RAW',      sheet:'Sheet3', fields:['Reward'] }
+];
+
+// How each possible column should be labeled / styled in the stats grid.
+const FIELD_META = {
+  DepositTarget:          { label:'Deposit Target',           prefix:'$' },
+  CashReward:             { label:'Cash Reward',               accent:true },
+  AdditionalReward:       { label:'Additional Reward',         silver:true, emptyText:'None' },
+  DepositDate:            { label:'Deposit Date' },
+  DepositHoldRequirement: { label:'Deposit Hold Requirement' },
+  DaysCompleted:          { label:'Days Completed' },
+  Reward:                 { label:'Reward',                    accent:true },
+  RequiredLots:           { label:'Required Lots' },
+  LotsCompleted:          { label:'Lots Completed' }
+};
 // =====================
 
-const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+let currentGroupKey = null;
+
+function csvUrlFor(sheetName){
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+}
 
 function getCodeFromURL(){
   const params = new URLSearchParams(window.location.search);
   return (params.get('c') || '').trim();
+}
+
+function getGroupFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  const g = (params.get('g') || '').trim().toLowerCase();
+  const found = GROUPS.find(gr => gr.key === g);
+  return found ? found.key : GROUPS[0].key;
+}
+
+function renderGroupTabs(){
+  const el = document.getElementById('groupTabs');
+  if (!el) return;
+  el.innerHTML = GROUPS.map(g =>
+    `<button class="group-tab ${g.key === currentGroupKey ? 'active' : ''}" data-key="${g.key}">${g.label}</button>`
+  ).join('');
+
+  el.querySelectorAll('.group-tab').forEach(btn => {
+    btn.addEventListener('click', function(){
+      const key = this.getAttribute('data-key');
+      if (key === currentGroupKey) return;
+      currentGroupKey = key;
+
+      // keep the URL shareable/refresh-safe
+      const url = new URL(window.location.href);
+      url.searchParams.set('g', key);
+      window.history.replaceState({}, '', url);
+
+      renderGroupTabs();
+      loadData();
+    });
+  });
 }
 
 function showMessage(title, sub, isError){
@@ -508,14 +586,36 @@ function animateGauge(targetPct){
   requestAnimationFrame(frame);
 }
 
+function statFieldHTML(key, row){
+  const meta = FIELD_META[key] || { label:key };
+  let raw = row[key];
+  const isEmpty = raw === undefined || raw === null || raw === '' || raw === '-';
+  let displayVal;
+
+  if (isEmpty){
+    displayVal = meta.emptyText || '—';
+  } else {
+    displayVal = (meta.prefix || '') + raw;
+  }
+
+  const cls = meta.accent ? 'value accent' : (meta.silver ? 'value silver' : 'value');
+
+  return `
+    <div class="field">
+      <div class="label">${meta.label}</div>
+      <div class="${cls}">${displayVal}</div>
+    </div>`;
+}
+
 function renderInner(row){
   const required = parseFloat(row.RequiredLots) || 0;
   const completed = parseFloat(row.LotsCompleted) || 0;
   const pct = required > 0 ? Math.min(100, Math.round((completed / required) * 100)) : 0;
   const st = statusInfo(row.Status);
+  const group = GROUPS.find(g => g.key === currentGroupKey) || GROUPS[0];
 
   document.getElementById('idPanelBody').innerHTML = `
-    <div class="badge">${row.OfferType || ''}</div>
+    <div class="badge">${row.GroupType || group.label}</div>
 
     <div class="gauge-wrap">
       <div class="gauge">
@@ -537,32 +637,10 @@ function renderInner(row){
 
   document.getElementById('stepperBody').innerHTML = stepperHTML(st.stage);
 
-  document.getElementById('statsBody').innerHTML = `
-    <div class="field">
-      <div class="label">Deposit Target</div>
-      <div class="value">$${row.DepositTarget || '—'}</div>
-    </div>
-    <div class="field">
-      <div class="label">Cash Reward</div>
-      <div class="value accent">${row.CashReward || '—'}</div>
-    </div>
-    <div class="field">
-      <div class="label">Additional Reward</div>
-      <div class="value silver">${row.AdditionalReward && row.AdditionalReward !== '-' ? row.AdditionalReward : 'None'}</div>
-    </div>
-    <div class="field">
-      <div class="label">Deposit Date</div>
-      <div class="value">${row.DepositDate || '—'}</div>
-    </div>
-    <div class="field">
-      <div class="label">Required Lots</div>
-      <div class="value">${row.RequiredLots || '—'}</div>
-    </div>
-    <div class="field">
-      <div class="label">Lots Completed</div>
-      <div class="value">${row.LotsCompleted || '0'}</div>
-    </div>
-  `;
+  // Build the stats grid using only the fields that apply to this group,
+  // then always finish with Required Lots / Lots Completed.
+  const statKeys = [...group.fields, 'RequiredLots', 'LotsCompleted'];
+  document.getElementById('statsBody').innerHTML = statKeys.map(key => statFieldHTML(key, row)).join('');
 }
 
 function renderClientGroup(rows){
@@ -572,7 +650,7 @@ function renderClientGroup(rows){
   const dropdownHTML = hasMultiple ? `
     <div class="offer-select-wrap">
       <select class="offer-select" id="offerSelect">
-        ${rows.map((r, i) => `<option value="${i}">${r.OfferType || 'Offer ' + (i + 1)}</option>`).join('')}
+        ${rows.map((r, i) => `<option value="${i}">${r.GroupType || 'Offer ' + (i + 1)}</option>`).join('')}
       </select>
     </div>` : '';
 
@@ -580,8 +658,8 @@ function renderClientGroup(rows){
     <div class="layout">
 
       <div class="panel id-panel">
-        <div class="client-name">${first.ClientName || 'Client'}</div>
-        <div class="client-code">CODE: ${first.Code}</div>
+        <div class="client-name">${first.PartnerName || 'Client'}</div>
+        <div class="client-code">CODE: ${first.PartnerCode}</div>
         ${dropdownHTML}
         <div id="idPanelBody"></div>
       </div>
@@ -622,17 +700,21 @@ function loadData(){
     return;
   }
 
-  Papa.parse(CSV_URL, {
+  const group = GROUPS.find(g => g.key === currentGroupKey) || GROUPS[0];
+
+  showMessage('Loading your progress…', 'Please wait a moment.', false);
+
+  Papa.parse(csvUrlFor(group.sheet), {
     download: true,
     header: true,
     skipEmptyLines: true,
     complete: function(results){
       const rows = results.data;
-      const matches = rows.filter(r => (r.Code || '').trim().toLowerCase() === code.toLowerCase());
+      const matches = rows.filter(r => (r.PartnerCode || '').trim().toLowerCase() === code.toLowerCase());
       if (matches.length === 0){
         showMessage(
           'Code Not Found',
-          "We couldn't find this code. Please check your link or contact XYLO Trade support.",
+          `We couldn't find this code under ${group.label}. Please check your link, try another tab above, or contact XYLO Trade support.`,
           true
         );
         return;
@@ -649,6 +731,8 @@ function loadData(){
   });
 }
 
+currentGroupKey = getGroupFromURL();
+renderGroupTabs();
 loadData();
 
 // ---------- Background engine sound ----------
