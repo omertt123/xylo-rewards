@@ -5,24 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XYLO TRADE — My Rewards</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{
-    --bg: #0a0a0a;
-    --panel: #131414;
-    --panel-line: #232522;
-    --green: #39d353;
-    --green-dim: #1d5c2a;
-    --gold: #d4af37;
-    --red: #e6433f;
-    --text: #eef0ec;
-    --text-dim: #8a908b;
+    --bg:#08090a;
+    --panel:#121312;
+    --panel-2:#17181653;
+    --line:#232522;
+    --green:#34e07a;
+    --green-deep:#12321d;
+    --green-dim:#7fae90;
+    --gold:#d4af37;
+    --red:#e6433f;
+    --text:#f2f4f1;
+    --text-dim:#83897f;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
   body{
     background:
-      radial-gradient(circle at 50% -10%, #14201599, transparent 55%),
+      radial-gradient(circle at 15% 0%, #0f2318a8, transparent 45%),
+      radial-gradient(circle at 100% 100%, #0f2318a8, transparent 40%),
       var(--bg);
     color:var(--text);
     font-family:'Inter', sans-serif;
@@ -30,208 +34,238 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-    padding:32px 16px 60px;
+    padding:0 0 60px;
   }
-  .track-line{
+
+  /* ---------- Header ---------- */
+  .topbar{
     width:100%;
-    max-width:520px;
-    height:3px;
-    background:repeating-linear-gradient(90deg, var(--green) 0 14px, transparent 14px 24px);
-    opacity:.55;
-    margin-bottom:26px;
+    display:flex;
+    justify-content:center;
+    border-bottom:1px solid var(--line);
+    background:#0a0b0acc;
+    backdrop-filter:blur(6px);
+    position:sticky; top:0; z-index:10;
   }
-  .brand{
+  .topbar-inner{
+    width:100%;
+    max-width:960px;
     display:flex;
     align-items:center;
-    gap:10px;
-    margin-bottom:4px;
+    justify-content:space-between;
+    padding:16px 20px;
   }
+  .brand{ display:flex; align-items:center; gap:9px; }
   .brand .x{
     font-family:'Rajdhani', sans-serif;
-    font-weight:700;
-    font-size:26px;
-    color:var(--green);
-    letter-spacing:1px;
+    font-weight:700; font-size:22px; color:var(--green);
   }
   .brand .name{
     font-family:'Rajdhani', sans-serif;
-    font-weight:600;
-    font-size:20px;
-    letter-spacing:3px;
-    color:var(--text);
+    font-weight:600; font-size:16px; letter-spacing:3px;
+  }
+  .topbar .tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px; letter-spacing:1.5px;
+    color:var(--text-dim); text-transform:uppercase;
+  }
+
+  .flag-strip{
+    width:100%; max-width:960px;
+    height:6px;
+    margin:0 auto;
+    background-image:
+      linear-gradient(45deg, var(--line) 25%, transparent 25%, transparent 75%, var(--line) 75%),
+      linear-gradient(45deg, var(--line) 25%, transparent 25%, transparent 75%, var(--line) 75%);
+    background-size:10px 10px;
+    background-position:0 0, 5px 5px;
+    opacity:.5;
+  }
+
+  .page{
+    width:100%;
+    max-width:960px;
+    padding:34px 20px 0;
   }
   .eyebrow{
     color:var(--text-dim);
-    font-size:12px;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    margin:14px 0 28px;
+    font-size:11.5px; letter-spacing:2px; text-transform:uppercase;
+    margin-bottom:22px;
   }
 
-  .card{
-    width:100%;
-    max-width:520px;
+  /* ---------- Layout: desktop two-column ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:20px;
+  }
+  @media (min-width:860px){
+    .layout{ grid-template-columns: 340px 1fr; align-items:start; }
+  }
+
+  .panel{
     background:var(--panel);
-    border:1px solid var(--panel-line);
-    border-radius:14px;
-    padding:28px 26px 30px;
+    border:1px solid var(--line);
+    border-radius:16px;
     position:relative;
     overflow:hidden;
   }
-  .card::before{
-    content:'';
-    position:absolute; top:0; left:0; right:0; height:3px;
-    background:linear-gradient(90deg, var(--green), transparent 70%);
+  .panel::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, var(--green), transparent 75%);
   }
 
-  .client-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    margin-bottom:22px;
-  }
+  /* ---------- Identity + gauge panel ---------- */
+  .id-panel{ padding:28px 26px 30px; text-align:center; }
   .client-name{
-    font-family:'Rajdhani', sans-serif;
-    font-weight:700;
-    font-size:24px;
+    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:23px;
   }
   .client-code{
-    color:var(--text-dim);
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px;
-    margin-top:4px;
+    font-family:'JetBrains Mono', monospace; font-size:11.5px;
+    color:var(--text-dim); margin-top:4px; letter-spacing:.5px;
   }
   .badge{
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    letter-spacing:1px;
-    padding:5px 10px;
-    border-radius:20px;
-    border:1px solid var(--green-dim);
-    color:var(--green);
-    white-space:nowrap;
-    text-transform:uppercase;
+    display:inline-block; margin-top:12px;
+    font-family:'JetBrains Mono', monospace; font-size:10.5px;
+    letter-spacing:1.5px; text-transform:uppercase;
+    padding:5px 12px; border-radius:20px;
+    border:1px solid var(--green-deep); color:var(--green);
   }
 
-  .gauge-wrap{
-    display:flex;
-    justify-content:center;
-    margin:6px 0 26px;
-  }
-  .gauge{ position:relative; width:190px; height:190px; }
-  .gauge svg{ transform:rotate(-90deg); }
+  .gauge-wrap{ display:flex; justify-content:center; margin:26px 0 8px; }
+  .gauge{ position:relative; width:208px; height:208px; }
+  .gauge svg{ overflow:visible; }
   .gauge-center{
     position:absolute; inset:0;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
   }
   .gauge-pct{
-    font-family:'Rajdhani', sans-serif;
-    font-weight:700;
-    font-size:40px;
-    line-height:1;
+    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:42px; line-height:1;
   }
   .gauge-label{
-    color:var(--text-dim);
-    font-size:11px;
-    letter-spacing:1.5px;
-    text-transform:uppercase;
-    margin-top:6px;
+    color:var(--text-dim); font-size:10.5px; letter-spacing:1.5px;
+    text-transform:uppercase; margin-top:6px;
   }
   .gauge-lots{
-    font-family:'JetBrains Mono', monospace;
-    font-size:13px;
-    color:var(--text-dim);
-    margin-top:8px;
+    font-family:'JetBrains Mono', monospace; font-size:13px;
+    color:var(--text-dim); margin-top:9px;
   }
+  .tick{ stroke:var(--line); stroke-width:2; }
+  .tick.active{ stroke:var(--green); }
 
   .status-line{
-    text-align:center;
-    font-family:'JetBrains Mono', monospace;
-    font-size:13px;
-    letter-spacing:1px;
-    padding:8px 0 22px;
-    border-bottom:1px dashed var(--panel-line);
-    margin-bottom:22px;
+    margin-top:22px;
+    font-family:'JetBrains Mono', monospace; font-size:12.5px;
+    letter-spacing:1px; text-transform:uppercase;
+    padding-top:18px; border-top:1px dashed var(--line);
   }
   .status-inprogress{ color:var(--gold); }
   .status-completed{ color:var(--green); }
   .status-released{ color:var(--green); font-weight:700; }
 
+  /* ---------- Right column ---------- */
+  .right-col{ display:flex; flex-direction:column; gap:20px; }
+
+  /* Stepper */
+  .stepper-panel{ padding:24px 26px 26px; }
+  .panel-title{
+    font-family:'Rajdhani', sans-serif; font-weight:600; font-size:14px;
+    letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim);
+    margin-bottom:20px;
+  }
+  .stepper{ display:flex; align-items:flex-start; }
+  .step{
+    flex:1; display:flex; flex-direction:column; align-items:center; text-align:center;
+    position:relative;
+  }
+  .step-dot{
+    width:13px; height:13px; border-radius:50%;
+    background:var(--line); border:2px solid var(--line);
+    margin-bottom:10px; z-index:1;
+  }
+  .step.done .step-dot{ background:var(--green); border-color:var(--green); }
+  .step.current .step-dot{ background:var(--gold); border-color:var(--gold); }
+  .step-connector{
+    position:absolute; top:6px; left:50%; width:100%; height:2px;
+    background:var(--line); z-index:0;
+  }
+  .step.done .step-connector{ background:var(--green); }
+  .step:first-child .step-connector{ display:none; }
+  .step-label{
+    font-size:10.5px; letter-spacing:.5px; color:var(--text-dim);
+    line-height:1.4; max-width:90px;
+  }
+  .step.done .step-label, .step.current .step-label{ color:var(--text); }
+
+  /* Stats grid */
+  .stats-panel{ padding:24px 26px 26px; }
   .grid{
     display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:16px 20px;
+    grid-template-columns:repeat(2, 1fr);
+    gap:18px 22px;
+  }
+  @media (min-width:560px){
+    .grid{ grid-template-columns:repeat(3, 1fr); }
   }
   .field .label{
-    color:var(--text-dim);
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:1px;
-    margin-bottom:4px;
+    color:var(--text-dim); font-size:10.5px; text-transform:uppercase;
+    letter-spacing:1px; margin-bottom:5px;
   }
   .field .value{
-    font-family:'JetBrains Mono', monospace;
-    font-size:15px;
-    font-weight:500;
+    font-family:'JetBrains Mono', monospace; font-size:15px; font-weight:600;
   }
   .value.accent{ color:var(--green); }
   .value.gold{ color:var(--gold); }
 
   .footer-note{
-    max-width:520px;
-    text-align:center;
-    color:var(--text-dim);
-    font-size:11px;
-    margin-top:24px;
-    line-height:1.6;
+    max-width:960px; width:100%;
+    text-align:center; color:var(--text-dim); font-size:11px;
+    margin-top:26px; padding:0 20px; line-height:1.6;
   }
 
+  /* ---------- Message / loading states ---------- */
+  .msg-wrap{ display:flex; justify-content:center; padding-top:60px; width:100%; }
   .msg-card{
-    max-width:420px;
-    text-align:center;
-    background:var(--panel);
-    border:1px solid var(--panel-line);
-    border-radius:14px;
-    padding:40px 26px;
+    max-width:420px; width:100%; text-align:center;
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:44px 28px;
   }
   .msg-card .title{
-    font-family:'Rajdhani', sans-serif;
-    font-weight:700;
-    font-size:20px;
-    margin-bottom:10px;
+    font-family:'Rajdhani', sans-serif; font-weight:700; font-size:19px; margin-bottom:10px;
   }
   .msg-card .sub{ color:var(--text-dim); font-size:13px; line-height:1.6; }
   .msg-card.error .title{ color:var(--red); }
-
-  @media (max-width:420px){
-    .grid{ grid-template-columns:1fr; }
-  }
 </style>
 </head>
 <body>
 
-  <div class="track-line"></div>
-  <div class="brand">
-    <span class="x">✕</span>
-    <span class="name">XYLO TRADE</span>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="x">✕</span><span class="name">XYLO TRADE</span></div>
+      <div class="tag">Trading Rewards Program</div>
+    </div>
   </div>
-  <div class="eyebrow">Trading Rewards Program</div>
+  <div class="flag-strip"></div>
 
-  <div id="app">
-    <div class="msg-card">
-      <div class="title">Loading your progress…</div>
-      <div class="sub">Please wait a moment.</div>
+  <div class="page">
+    <div class="eyebrow">My Rewards &amp; Progress</div>
+    <div id="app">
+      <div class="msg-wrap">
+        <div class="msg-card">
+          <div class="title">Loading your progress…</div>
+          <div class="sub">Please wait a moment.</div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="footer-note">Rewards are subject to verification and compliance checks as per the Trading Rewards Program terms. Contact XYLO Trade support for any questions about your progress.</div>
 
 <script>
-// ====== CONFIG — set these once ======
+// ====== CONFIG ======
 const SHEET_ID = "1iDwIqHeMtg1xWPovl7uM_6PNDshjoqJKpx_khS6Hbm4";
 const SHEET_NAME = "Sheet1";
-// ======================================
+// =====================
 
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
@@ -242,73 +276,132 @@ function getCodeFromURL(){
 
 function showMessage(title, sub, isError){
   document.getElementById('app').innerHTML = `
-    <div class="msg-card ${isError ? 'error' : ''}">
-      <div class="title">${title}</div>
-      <div class="sub">${sub}</div>
+    <div class="msg-wrap">
+      <div class="msg-card ${isError ? 'error' : ''}">
+        <div class="title">${title}</div>
+        <div class="sub">${sub}</div>
+      </div>
     </div>`;
 }
 
-function statusClass(status){
+function statusInfo(status){
   const s = (status || '').toLowerCase();
-  if (s.includes('release')) return 'status-released';
-  if (s.includes('complete')) return 'status-completed';
-  return 'status-inprogress';
+  if (s.includes('release')) return { cls:'status-released', stage:3 };
+  if (s.includes('complete')) return { cls:'status-completed', stage:2 };
+  return { cls:'status-inprogress', stage:1 };
+}
+
+function stepperHTML(stage){
+  const steps = ['Deposit Made', 'Volume Completed', 'Hold Period', 'Reward Released'];
+  return steps.map((label, i) => {
+    const idx = i + 1;
+    let cls = '';
+    if (idx < stage) cls = 'done';
+    else if (idx === stage) cls = 'current';
+    return `
+      <div class="step ${cls}">
+        <div class="step-connector"></div>
+        <div class="step-dot"></div>
+        <div class="step-label">${label}</div>
+      </div>`;
+  }).join('');
+}
+
+function gaugeSVG(pct){
+  const radius = 84;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (pct / 100) * circumference;
+  const size = 208;
+  const cx = size / 2, cy = size / 2;
+
+  // tick marks around the gauge (speedometer style)
+  let ticks = '';
+  const totalTicks = 40;
+  const activeTicks = Math.round((pct / 100) * totalTicks);
+  for (let i = 0; i < totalTicks; i++){
+    const angle = (i / totalTicks) * 360 - 90;
+    const rad = (angle * Math.PI) / 180;
+    const r1 = radius + 14, r2 = radius + 20;
+    const x1 = cx + r1 * Math.cos(rad), y1 = cy + r1 * Math.sin(rad);
+    const x2 = cx + r2 * Math.cos(rad), y2 = cy + r2 * Math.sin(rad);
+    ticks += `<line class="tick ${i < activeTicks ? 'active' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+  }
+
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      ${ticks}
+      <circle cx="${cx}" cy="${cy}" r="${radius}" stroke="#232522" stroke-width="11" fill="none"/>
+      <circle cx="${cx}" cy="${cy}" r="${radius}" stroke="#34e07a" stroke-width="11" fill="none"
+        stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"
+        transform="rotate(-90 ${cx} ${cy})"/>
+    </svg>`;
 }
 
 function renderClient(row){
   const required = parseFloat(row.RequiredLots) || 0;
   const completed = parseFloat(row.LotsCompleted) || 0;
   const pct = required > 0 ? Math.min(100, Math.round((completed / required) * 100)) : 0;
-
-  const radius = 80;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (pct / 100) * circumference;
+  const st = statusInfo(row.Status);
 
   document.getElementById('app').innerHTML = `
-    <div class="card">
-      <div class="client-row">
-        <div>
-          <div class="client-name">${row.ClientName || 'Client'}</div>
-          <div class="client-code">CODE: ${row.Code}</div>
-        </div>
+    <div class="layout">
+
+      <div class="panel id-panel">
+        <div class="client-name">${row.ClientName || 'Client'}</div>
+        <div class="client-code">CODE: ${row.Code}</div>
         <div class="badge">${row.OfferType || ''}</div>
+
+        <div class="gauge-wrap">
+          <div class="gauge">
+            ${gaugeSVG(pct)}
+            <div class="gauge-center">
+              <div class="gauge-pct">${pct}%</div>
+              <div class="gauge-label">Volume Complete</div>
+              <div class="gauge-lots">${completed} / ${required} lots</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-line ${st.cls}">${(row.Status || 'In Progress').toUpperCase()}</div>
       </div>
 
-      <div class="gauge-wrap">
-        <div class="gauge">
-          <svg width="190" height="190">
-            <circle cx="95" cy="95" r="${radius}" stroke="#232522" stroke-width="12" fill="none"/>
-            <circle cx="95" cy="95" r="${radius}" stroke="#39d353" stroke-width="12" fill="none"
-              stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
-          </svg>
-          <div class="gauge-center">
-            <div class="gauge-pct">${pct}%</div>
-            <div class="gauge-label">Volume Complete</div>
-            <div class="gauge-lots">${completed} / ${required} lots</div>
+      <div class="right-col">
+        <div class="panel stepper-panel">
+          <div class="panel-title">Reward Journey</div>
+          <div class="stepper">${stepperHTML(st.stage)}</div>
+        </div>
+
+        <div class="panel stats-panel">
+          <div class="panel-title">Target Details</div>
+          <div class="grid">
+            <div class="field">
+              <div class="label">Deposit Target</div>
+              <div class="value">$${row.DepositTarget || '—'}</div>
+            </div>
+            <div class="field">
+              <div class="label">Cash Reward</div>
+              <div class="value accent">${row.CashReward || '—'}</div>
+            </div>
+            <div class="field">
+              <div class="label">Additional Reward</div>
+              <div class="value gold">${row.AdditionalReward && row.AdditionalReward !== '-' ? row.AdditionalReward : 'None'}</div>
+            </div>
+            <div class="field">
+              <div class="label">Deposit Date</div>
+              <div class="value">${row.DepositDate || '—'}</div>
+            </div>
+            <div class="field">
+              <div class="label">Required Lots</div>
+              <div class="value">${row.RequiredLots || '—'}</div>
+            </div>
+            <div class="field">
+              <div class="label">Lots Completed</div>
+              <div class="value">${row.LotsCompleted || '0'}</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="status-line ${statusClass(row.Status)}">${(row.Status || 'In Progress').toUpperCase()}</div>
-
-      <div class="grid">
-        <div class="field">
-          <div class="label">Deposit Target</div>
-          <div class="value">$${row.DepositTarget || '—'}</div>
-        </div>
-        <div class="field">
-          <div class="label">Cash Reward</div>
-          <div class="value accent">${row.CashReward || '—'}</div>
-        </div>
-        <div class="field">
-          <div class="label">Additional Reward</div>
-          <div class="value gold">${row.AdditionalReward && row.AdditionalReward !== '-' ? row.AdditionalReward : 'None'}</div>
-        </div>
-        <div class="field">
-          <div class="label">Deposit Date</div>
-          <div class="value">${row.DepositDate || '—'}</div>
-        </div>
-      </div>
     </div>
   `;
 }
@@ -335,7 +428,7 @@ function loadData(){
       if (!match){
         showMessage(
           'Code Not Found',
-          'We couldn\'t find this code. Please check your link or contact XYLO Trade support.',
+          "We couldn't find this code. Please check your link or contact XYLO Trade support.",
           true
         );
         return;
