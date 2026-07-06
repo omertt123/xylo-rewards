@@ -343,7 +343,7 @@
       </div>
     </div>
   </div>
-  <audio id="bgSound" src="https://xylotrade.uk/wp-content/uploads/2026/07/ElevenLabs_continuous_sound_of_nascar_racing.mp3" loop preload="auto"></audio>
+  <audio id="bgSound" src="https://xylotrade.uk/wp-content/uploads/2026/07/ElevenLabs_continuous_sound_of_nascar_racing.mp3" preload="auto"></audio>
   <div class="flag-strip"></div>
 
   <div class="hero-banner">
@@ -692,7 +692,12 @@ loadData();
     }
   });
 
-  window.addEventListener('load', tryAutoplay);
+  audio.addEventListener('ended', function(){
+    setPlayingUI(false);
+  });
+
+  // Try immediately (script runs after DOM is parsed) instead of waiting for full page load
+  tryAutoplay();
 })();
 </script>
 </body>
