@@ -682,11 +682,18 @@ function statFieldHTML(key, row){
     </div>`;
 }
 
+function resolveStage(row, fallbackStage){
+  const num = parseInt((row.Stage || '').toString().trim(), 10);
+  if (!isNaN(num) && num >= 1 && num <= 4) return num;
+  return fallbackStage;
+}
+
 function renderInner(row){
   const required = parseFloat(row.RequiredLots) || 0;
   const completed = parseFloat(row.LotsCompleted) || 0;
   const pct = required > 0 ? Math.min(100, Math.round((completed / required) * 100)) : 0;
   const st = statusInfo(row.Status);
+  const stage = resolveStage(row, st.stage);
   const group = GROUPS.find(g => g.key === currentGroupKey) || GROUPS[0];
 
   document.getElementById('idPanelBody').innerHTML = `
@@ -710,7 +717,7 @@ function renderInner(row){
 
   animateGauge(pct);
 
-  document.getElementById('stepperBody').innerHTML = stepperHTML(st.stage);
+  document.getElementById('stepperBody').innerHTML = stepperHTML(stage);
 
   // Build the stats grid using only the fields that apply to this group,
   // then always finish with Required Lots / Lots Completed.
