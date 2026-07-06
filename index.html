@@ -71,6 +71,19 @@
     font-size:10.5px; letter-spacing:1.5px;
     color:var(--text-dim); text-transform:uppercase;
   }
+  .topbar-right{ display:flex; align-items:center; gap:14px; }
+  .sound-toggle{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    width:30px; height:30px;
+    border-radius:50%;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px;
+    transition:all .2s ease;
+  }
+  .sound-toggle.on{ color:var(--green); border-color:var(--green); box-shadow:0 0 8px var(--green-glow); }
 
   .flag-strip{
     width:100%; max-width:960px;
@@ -324,9 +337,13 @@
   <div class="topbar">
     <div class="topbar-inner">
       <div class="brand"><img src="https://crm.xylotrade.uk/assets/images/logoIcon/logo.png?v=1782996709" alt="XYLO Trade" onerror="this.style.display='none'"><span class="name">XYLO TRADE</span></div>
-      <div class="tag">Trading Rewards Program</div>
+      <div class="topbar-right">
+        <div class="tag">Trading Rewards Program</div>
+        <button class="sound-toggle" id="soundToggle" title="Toggle engine sound">🔊</button>
+      </div>
     </div>
   </div>
+  <audio id="bgSound" src="https://xylotrade.uk/wp-content/uploads/2026/07/ElevenLabs_continuous_sound_of_nascar_racing.mp3" loop preload="auto"></audio>
   <div class="flag-strip"></div>
 
   <div class="hero-banner">
@@ -633,6 +650,50 @@ function loadData(){
 }
 
 loadData();
+
+// ---------- Background engine sound ----------
+(function(){
+  const audio = document.getElementById('bgSound');
+  const btn = document.getElementById('soundToggle');
+  if (!audio || !btn) return;
+
+  audio.volume = 0.35;
+  let userMuted = false;
+
+  function setPlayingUI(isPlaying){
+    btn.textContent = isPlaying ? '🔊' : '🔈';
+    btn.classList.toggle('on', isPlaying);
+  }
+
+  function tryAutoplay(){
+    const p = audio.play();
+    if (p !== undefined){
+      p.then(() => setPlayingUI(true)).catch(() => {
+        setPlayingUI(false);
+        const resume = () => {
+          if (!userMuted) audio.play().then(() => setPlayingUI(true)).catch(() => {});
+          document.removeEventListener('click', resume);
+          document.removeEventListener('touchstart', resume);
+        };
+        document.addEventListener('click', resume, { once:true });
+        document.addEventListener('touchstart', resume, { once:true });
+      });
+    }
+  }
+
+  btn.addEventListener('click', function(){
+    if (audio.paused){
+      userMuted = false;
+      audio.play().then(() => setPlayingUI(true)).catch(() => {});
+    } else {
+      userMuted = true;
+      audio.pause();
+      setPlayingUI(false);
+    }
+  });
+
+  window.addEventListener('load', tryAutoplay);
+})();
 </script>
 </body>
 </html>
