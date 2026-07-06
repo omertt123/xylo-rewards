@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XYLO TRADE — My Rewards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root{
+    --bg: #0a0a0a;
+    --panel: #131414;
+    --panel-line: #232522;
+    --green: #39d353;
+    --green-dim: #1d5c2a;
+    --gold: #d4af37;
+    --red: #e6433f;
+    --text: #eef0ec;
+    --text-dim: #8a908b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 50% -10%, #14201599, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:32px 16px 60px;
+  }
+  .track-line{
+    width:100%;
+    max-width:520px;
+    height:3px;
+    background:repeating-linear-gradient(90deg, var(--green) 0 14px, transparent 14px 24px);
+    opacity:.55;
+    margin-bottom:26px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:4px;
+  }
+  .brand .x{
+    font-family:'Rajdhani', sans-serif;
+    font-weight:700;
+    font-size:26px;
+    color:var(--green);
+    letter-spacing:1px;
+  }
+  .brand .name{
+    font-family:'Rajdhani', sans-serif;
+    font-weight:600;
+    font-size:20px;
+    letter-spacing:3px;
+    color:var(--text);
+  }
+  .eyebrow{
+    color:var(--text-dim);
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin:14px 0 28px;
+  }
+
+  .card{
+    width:100%;
+    max-width:520px;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:14px;
+    padding:28px 26px 30px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg, var(--green), transparent 70%);
+  }
+
+  .client-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:22px;
+  }
+  .client-name{
+    font-family:'Rajdhani', sans-serif;
+    font-weight:700;
+    font-size:24px;
+  }
+  .client-code{
+    color:var(--text-dim);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    margin-top:4px;
+  }
+  .badge{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:1px;
+    padding:5px 10px;
+    border-radius:20px;
+    border:1px solid var(--green-dim);
+    color:var(--green);
+    white-space:nowrap;
+    text-transform:uppercase;
+  }
+
+  .gauge-wrap{
+    display:flex;
+    justify-content:center;
+    margin:6px 0 26px;
+  }
+  .gauge{ position:relative; width:190px; height:190px; }
+  .gauge svg{ transform:rotate(-90deg); }
+  .gauge-center{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+  .gauge-pct{
+    font-family:'Rajdhani', sans-serif;
+    font-weight:700;
+    font-size:40px;
+    line-height:1;
+  }
+  .gauge-label{
+    color:var(--text-dim);
+    font-size:11px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    margin-top:6px;
+  }
+  .gauge-lots{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--text-dim);
+    margin-top:8px;
+  }
+
+  .status-line{
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    letter-spacing:1px;
+    padding:8px 0 22px;
+    border-bottom:1px dashed var(--panel-line);
+    margin-bottom:22px;
+  }
+  .status-inprogress{ color:var(--gold); }
+  .status-completed{ color:var(--green); }
+  .status-released{ color:var(--green); font-weight:700; }
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px 20px;
+  }
+  .field .label{
+    color:var(--text-dim);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:4px;
+  }
+  .field .value{
+    font-family:'JetBrains Mono', monospace;
+    font-size:15px;
+    font-weight:500;
+  }
+  .value.accent{ color:var(--green); }
+  .value.gold{ color:var(--gold); }
+
+  .footer-note{
+    max-width:520px;
+    text-align:center;
+    color:var(--text-dim);
+    font-size:11px;
+    margin-top:24px;
+    line-height:1.6;
+  }
+
+  .msg-card{
+    max-width:420px;
+    text-align:center;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:14px;
+    padding:40px 26px;
+  }
+  .msg-card .title{
+    font-family:'Rajdhani', sans-serif;
+    font-weight:700;
+    font-size:20px;
+    margin-bottom:10px;
+  }
+  .msg-card .sub{ color:var(--text-dim); font-size:13px; line-height:1.6; }
+  .msg-card.error .title{ color:var(--red); }
+
+  @media (max-width:420px){
+    .grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="track-line"></div>
+  <div class="brand">
+    <span class="x">✕</span>
+    <span class="name">XYLO TRADE</span>
+  </div>
+  <div class="eyebrow">Trading Rewards Program</div>
+
+  <div id="app">
+    <div class="msg-card">
+      <div class="title">Loading your progress…</div>
+      <div class="sub">Please wait a moment.</div>
+    </div>
+  </div>
+
+  <div class="footer-note">Rewards are subject to verification and compliance checks as per the Trading Rewards Program terms. Contact XYLO Trade support for any questions about your progress.</div>
+
+<script>
+// ====== CONFIG — set these once ======
+const SHEET_ID = "1iDwIqHeMtg1xWPovl7uM_6PNDshjoqJKpx_khS6Hbm4";
+const SHEET_NAME = "Sheet1";
+// ======================================
+
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+function getCodeFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  return (params.get('c') || '').trim();
+}
+
+function showMessage(title, sub, isError){
+  document.getElementById('app').innerHTML = `
+    <div class="msg-card ${isError ? 'error' : ''}">
+      <div class="title">${title}</div>
+      <div class="sub">${sub}</div>
+    </div>`;
+}
+
+function statusClass(status){
+  const s = (status || '').toLowerCase();
+  if (s.includes('release')) return 'status-released';
+  if (s.includes('complete')) return 'status-completed';
+  return 'status-inprogress';
+}
+
+function renderClient(row){
+  const required = parseFloat(row.RequiredLots) || 0;
+  const completed = parseFloat(row.LotsCompleted) || 0;
+  const pct = required > 0 ? Math.min(100, Math.round((completed / required) * 100)) : 0;
+
+  const radius = 80;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (pct / 100) * circumference;
+
+  document.getElementById('app').innerHTML = `
+    <div class="card">
+      <div class="client-row">
+        <div>
+          <div class="client-name">${row.ClientName || 'Client'}</div>
+          <div class="client-code">CODE: ${row.Code}</div>
+        </div>
+        <div class="badge">${row.OfferType || ''}</div>
+      </div>
+
+      <div class="gauge-wrap">
+        <div class="gauge">
+          <svg width="190" height="190">
+            <circle cx="95" cy="95" r="${radius}" stroke="#232522" stroke-width="12" fill="none"/>
+            <circle cx="95" cy="95" r="${radius}" stroke="#39d353" stroke-width="12" fill="none"
+              stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-pct">${pct}%</div>
+            <div class="gauge-label">Volume Complete</div>
+            <div class="gauge-lots">${completed} / ${required} lots</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-line ${statusClass(row.Status)}">${(row.Status || 'In Progress').toUpperCase()}</div>
+
+      <div class="grid">
+        <div class="field">
+          <div class="label">Deposit Target</div>
+          <div class="value">$${row.DepositTarget || '—'}</div>
+        </div>
+        <div class="field">
+          <div class="label">Cash Reward</div>
+          <div class="value accent">${row.CashReward || '—'}</div>
+        </div>
+        <div class="field">
+          <div class="label">Additional Reward</div>
+          <div class="value gold">${row.AdditionalReward && row.AdditionalReward !== '-' ? row.AdditionalReward : 'None'}</div>
+        </div>
+        <div class="field">
+          <div class="label">Deposit Date</div>
+          <div class="value">${row.DepositDate || '—'}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function loadData(){
+  const code = getCodeFromURL();
+
+  if (!code){
+    showMessage(
+      'No Code Found',
+      'Please use the personal link shared with you by XYLO Trade to view your rewards progress.',
+      true
+    );
+    return;
+  }
+
+  Papa.parse(CSV_URL, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results){
+      const rows = results.data;
+      const match = rows.find(r => (r.Code || '').trim().toLowerCase() === code.toLowerCase());
+      if (!match){
+        showMessage(
+          'Code Not Found',
+          'We couldn\'t find this code. Please check your link or contact XYLO Trade support.',
+          true
+        );
+        return;
+      }
+      renderClient(match);
+    },
+    error: function(){
+      showMessage(
+        'Unable to Load Data',
+        'Something went wrong loading your progress. Please try again in a moment.',
+        true
+      );
+    }
+  });
+}
+
+loadData();
+</script>
+</body>
+</html>
