@@ -459,7 +459,7 @@ const FIELD_META = {
 let currentGroupKey = null;
 
 function csvUrlFor(sheetName){
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&_ts=${Date.now()}`;
 }
 
 function getCodeFromURL(){
