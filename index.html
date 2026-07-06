@@ -412,31 +412,83 @@ function stepperHTML(stage){
 function gaugeSVG(pct){
   const radius = 84;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (pct / 100) * circumference;
   const size = 208;
   const cx = size / 2, cy = size / 2;
 
-  // tick marks around the gauge (speedometer style)
+  // tick marks around the gauge (speedometer style) — start inactive, JS animates them
   let ticks = '';
   const totalTicks = 40;
-  const activeTicks = Math.round((pct / 100) * totalTicks);
   for (let i = 0; i < totalTicks; i++){
     const angle = (i / totalTicks) * 360 - 90;
     const rad = (angle * Math.PI) / 180;
     const r1 = radius + 14, r2 = radius + 20;
     const x1 = cx + r1 * Math.cos(rad), y1 = cy + r1 * Math.sin(rad);
     const x2 = cx + r2 * Math.cos(rad), y2 = cy + r2 * Math.sin(rad);
-    ticks += `<line class="tick ${i < activeTicks ? 'active' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    ticks += `<line class="tick" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
   }
 
   return `
     <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
       ${ticks}
       <circle cx="${cx}" cy="${cy}" r="${radius}" stroke="#232522" stroke-width="11" fill="none"/>
-      <circle cx="${cx}" cy="${cy}" r="${radius}" stroke="#39ff6a" stroke-width="11" fill="none"
-        stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"
+      <circle id="gaugeProgress" cx="${cx}" cy="${cy}" r="${radius}" stroke="#39ff6a" stroke-width="11" fill="none"
+        stroke-dasharray="${circumference}" stroke-dashoffset="${circumference}" stroke-linecap="round"
         transform="rotate(-90 ${cx} ${cy})" style="filter:drop-shadow(0 0 6px rgba(57,255,106,0.75)) drop-shadow(0 0 14px rgba(57,255,106,0.4));"/>
     </svg>`;
+}
+
+function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+function easeInOutCubic(t){ return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+function animateGauge(targetPct){
+  const circle = document.getElementById('gaugeProgress');
+  const pctText = document.getElementById('gaugePctText');
+  const ticks = document.querySelectorAll('#idPanelBody .tick');
+  if (!circle) return;
+
+  const radius = 84;
+  const circumference = 2 * Math.PI * radius;
+  const totalTicks = ticks.length;
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion){
+    circle.style.strokeDashoffset = circumference - (targetPct / 100) * circumference;
+    if (pctText) pctText.textContent = targetPct + '%';
+    ticks.forEach((t, i) => { if (i < Math.round((targetPct / 100) * totalTicks)) t.classList.add('active'); });
+    return;
+  }
+
+  const fillDuration = 900;   // sweep up to 100%
+  const settleDuration = 750; // reverse back down to actual value
+  const startTime = performance.now();
+
+  function frame(now){
+    const elapsed = now - startTime;
+    let currentPct;
+
+    if (elapsed < fillDuration){
+      currentPct = easeOutCubic(elapsed / fillDuration) * 100;
+    } else if (elapsed < fillDuration + settleDuration){
+      const t = (elapsed - fillDuration) / settleDuration;
+      currentPct = 100 - easeInOutCubic(t) * (100 - targetPct);
+    } else {
+      currentPct = targetPct;
+    }
+
+    circle.style.strokeDashoffset = circumference - (currentPct / 100) * circumference;
+    if (pctText) pctText.textContent = Math.round(currentPct) + '%';
+
+    const activeCount = Math.round((currentPct / 100) * totalTicks);
+    ticks.forEach((t, i) => { t.classList.toggle('active', i < activeCount); });
+
+    if (elapsed < fillDuration + settleDuration){
+      requestAnimationFrame(frame);
+    } else {
+      circle.style.strokeDashoffset = circumference - (targetPct / 100) * circumference;
+      if (pctText) pctText.textContent = targetPct + '%';
+    }
+  }
+  requestAnimationFrame(frame);
 }
 
 function renderInner(row){
@@ -452,7 +504,7 @@ function renderInner(row){
       <div class="gauge">
         ${gaugeSVG(pct)}
         <div class="gauge-center">
-          <div class="gauge-pct">${pct}%</div>
+          <div class="gauge-pct" id="gaugePctText">0%</div>
           <div class="gauge-label">Volume Complete</div>
           <div class="gauge-lots">${completed} / ${required} lots</div>
         </div>
@@ -463,6 +515,8 @@ function renderInner(row){
 
     <div class="status-line ${st.cls}">${(row.Status || 'In Progress').toUpperCase()}</div>
   `;
+
+  animateGauge(pct);
 
   document.getElementById('stepperBody').innerHTML = stepperHTML(st.stage);
 
