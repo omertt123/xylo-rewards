@@ -402,7 +402,7 @@ const SHEET_ID = "1iDwIqHeMtg1xWPovl7uM_6PNDshjoqJKpx_khS6Hbm4";
 // "fields" = which extra columns show in the "Target Details" box for that group
 // (RequiredLots / LotsCompleted are always shown automatically, no need to list them).
 const GROUPS = [
-  { key:'ecn',      label:'ECN',      sheet:'Sheet1', fields:['DepositTarget','CashReward','AdditionalReward','DepositDate','DepositHoldRequirement','DaysCompleted'] },
+  { key:'ecn',      label:'ECN',      sheet:'Sheet1', fields:['DepositTarget','CashReward','AdditionalReward','TradingSetup','MobileReward','DepositDate','DepositHoldRequirement','DaysCompleted'] },
   { key:'standard', label:'STANDARD', sheet:'Sheet2', fields:['DepositTarget','CashReward','AdditionalReward'] },
   { key:'raw',      label:'RAW',      sheet:'Sheet3', fields:['Reward'] }
 ];
@@ -412,6 +412,8 @@ const FIELD_META = {
   DepositTarget:          { label:'Deposit Target',           prefix:'$' },
   CashReward:             { label:'Cash Reward',               accent:true },
   AdditionalReward:       { label:'Additional Reward',         silver:true, emptyText:'None' },
+  TradingSetup:           { label:'Trading Setup' },
+  MobileReward:           { label:'Mobile Reward',             silver:true, emptyText:'None' },
   DepositDate:            { label:'Deposit Date' },
   DepositHoldRequirement: { label:'Deposit Hold Requirement' },
   DaysCompleted:          { label:'Days Completed' },
@@ -708,6 +710,8 @@ function loadData(){
     download: true,
     header: true,
     skipEmptyLines: true,
+    transformHeader: h => (h || '').trim(),
+    transform: v => (typeof v === 'string' ? v.trim() : v),
     complete: function(results){
       const rows = results.data;
       const matches = rows.filter(r => (r.PartnerCode || '').trim().toLowerCase() === code.toLowerCase());
