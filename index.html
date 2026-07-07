@@ -154,16 +154,33 @@
   }
 
   .panel{
-    background:var(--panel);
-    border:1px solid var(--line);
+    background:rgba(18,19,18,0.55);
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    border:1px solid rgba(255,255,255,0.07);
     border-radius:16px;
     position:relative;
     overflow:hidden;
+    transform-style:preserve-3d;
+    transform:perspective(900px) rotateX(0deg) rotateY(0deg);
+    transition:transform .25s ease, box-shadow .25s ease;
+    will-change:transform;
+  }
+  .panel:hover{
+    box-shadow:0 20px 45px -20px rgba(0,0,0,0.6), 0 0 30px -12px var(--green-glow);
   }
   .panel::before{
     content:''; position:absolute; top:0; left:0; right:0; height:2px;
     background:linear-gradient(90deg, var(--green), transparent 75%);
     box-shadow:0 0 12px 1px var(--green-glow);
+    z-index:2;
+  }
+  .panel::after{
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(135deg, rgba(255,255,255,0.05), transparent 40%);
+    pointer-events:none;
+    z-index:1;
   }
 
   /* ---------- Identity + gauge panel ---------- */
@@ -211,6 +228,27 @@
   .gauge.small .gauge-lots{ font-size:11.5px; margin-top:7px; }
   .tick{ stroke:var(--line); stroke-width:2.5; }
   .tick.active{ stroke:var(--green); filter:drop-shadow(0 0 4px var(--green-glow)); }
+
+  .spark{
+    position:absolute;
+    width:4px; height:4px;
+    margin:-2px 0 0 -2px;
+    border-radius:50%;
+    background:radial-gradient(circle, #ffffff, #39ff6a 60%, transparent);
+    box-shadow:0 0 6px 1px var(--green-glow);
+    pointer-events:none;
+    animation:spark-fly .5s ease-out forwards;
+  }
+  @keyframes spark-fly{
+    0%{ opacity:1; transform:scale(1) translate(0,0); }
+    100%{ opacity:0; transform:scale(0.2) translate(var(--sx, 6px), var(--sy, 6px)); }
+  }
+
+  .gauge.pulsing .gauge-center{ animation:engine-pulse 1.6s ease-in-out infinite; }
+  @keyframes engine-pulse{
+    0%, 100%{ filter:drop-shadow(0 0 0px transparent); }
+    50%{ filter:drop-shadow(0 0 10px var(--green-glow)); }
+  }
 
   .status-line{
     margin-top:22px;
@@ -514,6 +552,37 @@ function showMessage(title, sub, isError){
 
 let manualCode = '';
 
+// ---------- 3D tilt effect (event delegation — works on any .panel, even ones rendered later) ----------
+(function(){
+  const MAX_TILT = 6; // degrees
+
+  document.addEventListener('mousemove', function(e){
+    const panel = e.target.closest('.panel');
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;  // 0 -> 1
+    const py = (e.clientY - rect.top) / rect.height;   // 0 -> 1
+    const rotateY = (px - 0.5) * MAX_TILT * 2;
+    const rotateX = (0.5 - py) * MAX_TILT * 2;
+    panel.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
+  });
+
+  document.addEventListener('mouseleave', function(e){
+    const panel = e.target.closest && e.target.closest('.panel');
+    if (!panel) return;
+    panel.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) scale(1)';
+  }, true);
+
+  // reset on mouseout when leaving the panel entirely
+  document.addEventListener('mouseout', function(e){
+    const panel = e.target.closest && e.target.closest('.panel');
+    if (!panel) return;
+    const related = e.relatedTarget;
+    if (related && panel.contains(related)) return;
+    panel.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) scale(1)';
+  });
+})();
+
 function showCodeEntryForm(errText){
   document.getElementById('app').innerHTML = `
     <div class="msg-wrap">
@@ -616,15 +685,60 @@ function gaugeSVG(pct, id, size){
       <circle id="gaugeProgress-${id}" cx="${cx}" cy="${cy}" r="${radius}" stroke="url(#gaugeGrad-${id})" stroke-width="13" fill="none"
         stroke-dasharray="${circumference}" stroke-dashoffset="${circumference}" stroke-linecap="round"
         transform="rotate(-90 ${cx} ${cy})" style="filter:drop-shadow(0 0 7px rgba(57,255,106,0.8)) drop-shadow(0 0 16px rgba(57,255,106,0.45));"/>
+      <g id="gaugeNeedle-${id}" style="transform-origin:${cx}px ${cy}px; transform:rotate(-90deg); transition:none;">
+        <line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy - radius + 20}" stroke="#e6433f" stroke-width="2.5" stroke-linecap="round"
+          style="filter:drop-shadow(0 0 4px rgba(230,67,63,0.7));"/>
+        <circle cx="${cx}" cy="${cy}" r="6" fill="#1a1b19" stroke="var(--silver)" stroke-width="1.5"/>
+      </g>
     </svg>`;
 }
 
 function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
 function easeInOutCubic(t){ return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 
+function animateNumberEl(el, target, opts){
+  if (!el || isNaN(target)) return;
+  opts = opts || {};
+  const duration = opts.duration || 900;
+  const prefix = opts.prefix || '';
+  const suffix = opts.suffix || '';
+  const decimals = opts.decimals || 0;
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    el.textContent = prefix + target.toFixed(decimals) + suffix;
+    return;
+  }
+
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now - start) / duration);
+    const val = target * easeOutCubic(t);
+    el.textContent = prefix + val.toFixed(decimals) + suffix;
+    if (t < 1) requestAnimationFrame(frame);
+    else el.textContent = prefix + target.toFixed(decimals) + suffix;
+  }
+  requestAnimationFrame(frame);
+}
+
+function spawnSpark(container, angleDeg, radius, cx, cy){
+  if (!container) return;
+  const rad = (angleDeg * Math.PI) / 180;
+  const x = cx + radius * Math.cos(rad);
+  const y = cy + radius * Math.sin(rad);
+  const spark = document.createElement('div');
+  spark.className = 'spark';
+  spark.style.left = x + 'px';
+  spark.style.top = y + 'px';
+  spark.style.setProperty('--sx', (Math.cos(rad) * 14 + (Math.random() * 8 - 4)) + 'px');
+  spark.style.setProperty('--sy', (Math.sin(rad) * 14 + (Math.random() * 8 - 4)) + 'px');
+  container.appendChild(spark);
+  setTimeout(() => spark.remove(), 500);
+}
+
 function animateGauge(targetPct, id, size){
   size = size || 224;
   const circle = document.getElementById(`gaugeProgress-${id}`);
+  const needle = document.getElementById(`gaugeNeedle-${id}`);
   const pctText = document.getElementById(`gaugePctText-${id}`);
   const ticks = document.querySelectorAll(`.tick-${id}`);
   if (!circle) return;
@@ -632,10 +746,13 @@ function animateGauge(targetPct, id, size){
   const radius = size / 224 * 90;
   const circumference = 2 * Math.PI * radius;
   const totalTicks = ticks.length;
+  const cx = size / 2, cy = size / 2;
+  const sparkContainer = circle.closest('.gauge');
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduceMotion){
     circle.style.strokeDashoffset = circumference - (targetPct / 100) * circumference;
+    if (needle) needle.style.transform = `rotate(${-90 + (targetPct / 100) * 360}deg)`;
     if (pctText) pctText.textContent = targetPct + '%';
     ticks.forEach((t, i) => { if (i < Math.round((targetPct / 100) * totalTicks)) t.classList.add('active'); });
     return;
@@ -644,6 +761,7 @@ function animateGauge(targetPct, id, size){
   const fillDuration = 900;   // sweep up to 100%
   const settleDuration = 750; // reverse back down to actual value
   const startTime = performance.now();
+  let lastSparkTime = 0;
 
   function frame(now){
     const elapsed = now - startTime;
@@ -658,16 +776,26 @@ function animateGauge(targetPct, id, size){
       currentPct = targetPct;
     }
 
+    const needleAngle = -90 + (currentPct / 100) * 360;
+
     circle.style.strokeDashoffset = circumference - (currentPct / 100) * circumference;
+    if (needle) needle.style.transform = `rotate(${needleAngle}deg)`;
     if (pctText) pctText.textContent = Math.round(currentPct) + '%';
 
     const activeCount = Math.round((currentPct / 100) * totalTicks);
     ticks.forEach((t, i) => { t.classList.toggle('active', i < activeCount); });
 
+    // spark particles trickle off the needle tip during the sweep
+    if (elapsed < fillDuration + settleDuration && now - lastSparkTime > 45){
+      lastSparkTime = now;
+      spawnSpark(sparkContainer, needleAngle, radius, cx, cy);
+    }
+
     if (elapsed < fillDuration + settleDuration){
       requestAnimationFrame(frame);
     } else {
       circle.style.strokeDashoffset = circumference - (targetPct / 100) * circumference;
+      if (needle) needle.style.transform = `rotate(${-90 + (targetPct / 100) * 360}deg)`;
       if (pctText) pctText.textContent = targetPct + '%';
     }
   }
@@ -676,23 +804,34 @@ function animateGauge(targetPct, id, size){
 
 function statFieldHTML(key, row){
   const meta = FIELD_META[key] || { label:key };
-  let raw = row[key];
+  const raw = row[key];
   const isEmpty = raw === undefined || raw === null || raw === '' || raw === '-';
-  let displayVal;
+  const cls = meta.accent ? 'value accent' : (meta.silver ? 'value silver' : 'value');
+  const fieldId = `stat-${key}`;
+  const prefix = meta.prefix || '';
+
+  let displayVal, numericTarget = null;
 
   if (isEmpty){
     displayVal = meta.emptyText || '—';
   } else {
-    displayVal = (meta.prefix || '') + raw;
+    const trimmed = raw.toString().trim();
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)){
+      numericTarget = parseFloat(trimmed);
+      displayVal = prefix + '0';
+    } else {
+      displayVal = prefix + raw;
+    }
   }
 
-  const cls = meta.accent ? 'value accent' : (meta.silver ? 'value silver' : 'value');
-
-  return `
-    <div class="field">
-      <div class="label">${meta.label}</div>
-      <div class="${cls}">${displayVal}</div>
-    </div>`;
+  return {
+    html: `
+      <div class="field">
+        <div class="label">${meta.label}</div>
+        <div class="${cls}" id="${fieldId}">${displayVal}</div>
+      </div>`,
+    numericTarget, fieldId, prefix
+  };
 }
 
 function resolveStage(row, fallbackStage){
@@ -721,8 +860,10 @@ function renderInner(row){
   const showDepositGauge = !!group.hasDeposit;
   const gaugeSize = showDepositGauge ? 172 : 224;
 
+  const pulseClass = st.cls === 'status-inprogress' ? ' pulsing' : '';
+
   const lotsGaugeHTML = `
-    <div class="gauge${showDepositGauge ? ' small' : ''}">
+    <div class="gauge${showDepositGauge ? ' small' : ''}${pulseClass}">
       ${gaugeSVG(pct, 'lots', gaugeSize)}
       <div class="gauge-center">
         <div class="gauge-pct" id="gaugePctText-lots">0%</div>
@@ -732,7 +873,7 @@ function renderInner(row){
     </div>`;
 
   const depositGaugeHTML = showDepositGauge ? `
-    <div class="gauge small">
+    <div class="gauge small${pulseClass}">
       ${gaugeSVG(depositPct, 'deposit', gaugeSize)}
       <div class="gauge-center">
         <div class="gauge-pct" id="gaugePctText-deposit">0%</div>
@@ -762,7 +903,13 @@ function renderInner(row){
   // Build the stats grid using only the fields that apply to this group,
   // then always finish with Required Lots / Lots Completed.
   const statKeys = [...group.fields, 'RequiredLots', 'LotsCompleted'];
-  document.getElementById('statsBody').innerHTML = statKeys.map(key => statFieldHTML(key, row)).join('');
+  const statInfos = statKeys.map(key => statFieldHTML(key, row));
+  document.getElementById('statsBody').innerHTML = statInfos.map(s => s.html).join('');
+  statInfos.forEach(s => {
+    if (s.numericTarget !== null){
+      animateNumberEl(document.getElementById(s.fieldId), s.numericTarget, { duration: 1000, prefix: s.prefix });
+    }
+  });
 }
 
 function renderClientGroup(rows){
