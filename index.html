@@ -150,7 +150,7 @@
     gap:20px;
   }
   @media (min-width:860px){
-    .layout{ grid-template-columns: 340px 1fr; align-items:start; }
+    .layout{ grid-template-columns: 380px 1fr; align-items:start; }
   }
 
   .panel{
@@ -167,7 +167,7 @@
   }
 
   /* ---------- Identity + gauge panel ---------- */
-  .id-panel{ padding:28px 26px 30px; text-align:center; }
+  .id-panel{ padding:28px 20px 30px; text-align:center; }
   .client-name{
     font-family:'Sora', sans-serif; font-weight:700; font-size:23px;
   }
@@ -185,32 +185,32 @@
     text-shadow:0 0 6px var(--green-glow);
   }
 
-  .gauge-wrap{ display:flex; justify-content:center; gap:20px; margin:26px 0 8px; flex-wrap:wrap; }
-  .gauge{ position:relative; width:208px; height:208px; }
-  .gauge.small{ width:158px; height:158px; }
+  .gauge-wrap{ display:flex; justify-content:center; gap:16px; margin:26px 0 8px; flex-wrap:wrap; }
+  .gauge{ position:relative; width:224px; height:224px; }
+  .gauge.small{ width:172px; height:172px; }
   .gauge svg{ overflow:visible; }
   .gauge-center{
     position:absolute; inset:0;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
   }
   .gauge-pct{
-    font-family:'Sora', sans-serif; font-weight:700; font-size:42px; line-height:1;
+    font-family:'Sora', sans-serif; font-weight:800; font-size:46px; line-height:1;
     color:var(--green);
-    text-shadow:0 0 14px var(--green-glow), 0 0 28px rgba(57,255,106,0.35);
+    text-shadow:0 0 16px var(--green-glow), 0 0 32px rgba(57,255,106,0.4);
   }
-  .gauge.small .gauge-pct{ font-size:30px; }
+  .gauge.small .gauge-pct{ font-size:33px; }
   .gauge-label{
-    color:var(--text-dim); font-size:10.5px; letter-spacing:1.5px;
-    text-transform:uppercase; margin-top:6px;
+    color:var(--text-dim); font-size:11px; letter-spacing:1.8px;
+    text-transform:uppercase; margin-top:7px; font-weight:600;
   }
-  .gauge.small .gauge-label{ font-size:9.5px; }
+  .gauge.small .gauge-label{ font-size:9.5px; letter-spacing:1.4px; }
   .gauge-lots{
-    font-family:'JetBrains Mono', monospace; font-size:13px;
-    color:var(--text-dim); margin-top:9px;
+    font-family:'JetBrains Mono', monospace; font-size:14px; font-weight:600;
+    color:var(--silver); margin-top:10px;
   }
-  .gauge.small .gauge-lots{ font-size:11px; margin-top:6px; }
-  .tick{ stroke:var(--line); stroke-width:2; }
-  .tick.active{ stroke:var(--green); filter:drop-shadow(0 0 3px var(--green-glow)); }
+  .gauge.small .gauge-lots{ font-size:11.5px; margin-top:7px; }
+  .tick{ stroke:var(--line); stroke-width:2.5; }
+  .tick.active{ stroke:var(--green); filter:drop-shadow(0 0 4px var(--green-glow)); }
 
   .status-line{
     margin-top:22px;
@@ -584,18 +584,18 @@ function stepperHTML(stage){
 }
 
 function gaugeSVG(pct, id, size){
-  size = size || 208;
-  const radius = size / 208 * 84;
+  size = size || 224;
+  const radius = size / 224 * 90;
   const circumference = 2 * Math.PI * radius;
   const cx = size / 2, cy = size / 2;
 
   // tick marks around the gauge (speedometer style) — start inactive, JS animates them
   let ticks = '';
-  const totalTicks = 40;
+  const totalTicks = 44;
   for (let i = 0; i < totalTicks; i++){
     const angle = (i / totalTicks) * 360 - 90;
     const rad = (angle * Math.PI) / 180;
-    const r1 = radius + 14, r2 = radius + 20;
+    const r1 = radius + 15, r2 = radius + 22;
     const x1 = cx + r1 * Math.cos(rad), y1 = cy + r1 * Math.sin(rad);
     const x2 = cx + r2 * Math.cos(rad), y2 = cy + r2 * Math.sin(rad);
     ticks += `<line class="tick tick-${id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
@@ -603,11 +603,19 @@ function gaugeSVG(pct, id, size){
 
   return `
     <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <defs>
+        <linearGradient id="gaugeGrad-${id}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#1fdc55"/>
+          <stop offset="55%" stop-color="#39ff6a"/>
+          <stop offset="100%" stop-color="#9dffb8"/>
+        </linearGradient>
+      </defs>
+      <circle cx="${cx}" cy="${cy}" r="${radius + 26}" fill="rgba(57,255,106,0.035)"/>
       ${ticks}
-      <circle cx="${cx}" cy="${cy}" r="${radius}" stroke="#232522" stroke-width="11" fill="none"/>
-      <circle id="gaugeProgress-${id}" cx="${cx}" cy="${cy}" r="${radius}" stroke="#39ff6a" stroke-width="11" fill="none"
+      <circle cx="${cx}" cy="${cy}" r="${radius}" stroke="#1e211d" stroke-width="13" fill="none"/>
+      <circle id="gaugeProgress-${id}" cx="${cx}" cy="${cy}" r="${radius}" stroke="url(#gaugeGrad-${id})" stroke-width="13" fill="none"
         stroke-dasharray="${circumference}" stroke-dashoffset="${circumference}" stroke-linecap="round"
-        transform="rotate(-90 ${cx} ${cy})" style="filter:drop-shadow(0 0 6px rgba(57,255,106,0.75)) drop-shadow(0 0 14px rgba(57,255,106,0.4));"/>
+        transform="rotate(-90 ${cx} ${cy})" style="filter:drop-shadow(0 0 7px rgba(57,255,106,0.8)) drop-shadow(0 0 16px rgba(57,255,106,0.45));"/>
     </svg>`;
 }
 
@@ -615,13 +623,13 @@ function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
 function easeInOutCubic(t){ return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 
 function animateGauge(targetPct, id, size){
-  size = size || 208;
+  size = size || 224;
   const circle = document.getElementById(`gaugeProgress-${id}`);
   const pctText = document.getElementById(`gaugePctText-${id}`);
   const ticks = document.querySelectorAll(`.tick-${id}`);
   if (!circle) return;
 
-  const radius = size / 208 * 84;
+  const radius = size / 224 * 90;
   const circumference = 2 * Math.PI * radius;
   const totalTicks = ticks.length;
 
@@ -711,7 +719,7 @@ function renderInner(row){
   const depositCompleted = parseNum(row.DepositCompleted);
   const depositPct = depositTarget > 0 ? Math.min(100, Math.round((depositCompleted / depositTarget) * 100)) : 0;
   const showDepositGauge = !!group.hasDeposit;
-  const gaugeSize = showDepositGauge ? 158 : 208;
+  const gaugeSize = showDepositGauge ? 172 : 224;
 
   const lotsGaugeHTML = `
     <div class="gauge${showDepositGauge ? ' small' : ''}">
